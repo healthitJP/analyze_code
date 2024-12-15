@@ -1,29 +1,24 @@
 {
     "data": [
         {
-            "value1": 10,
-            "value2": 20,
-            "value3": 30
+            "xValue": 10,
+            "yValue": 20
         },
         {
-            "value1": 15,
-            "value2": 25,
-            "value3": 35
+            "xValue": 15,
+            "yValue": 25
         },
         {
-            "value1": 20,
-            "value2": 30,
-            "value3": 40
+            "xValue": 20,
+            "yValue": 30
         },
         {
-            "value1": 25,
-            "value2": 35,
-            "value3": 45
+            "xValue": 25,
+            "yValue": 35
         },
         {
-            "value1": 30,
-            "value2": 40,
-            "value3": 50
+            "xValue": 30,
+            "yValue": 40
         }
     ]
 }

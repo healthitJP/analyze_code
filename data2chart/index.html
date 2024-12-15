@@ -6,13 +6,14 @@
   <title>data2chart</title>
 </head>
 <body>
-  <div id="id"></div>
-  <script src="./dist/data-2-chart.umd.js"></script>
-  <script>
-    chart=Data2Chart.createChart('id')
+  <div id="id" style="height: 400px;width: 600px;"></div>
+  <script type="module">
+    import { createChart } from './src/main.ts';
+    const chart=createChart('id');
     console.log('data2chart is ready');
     window.chart=chart;
     chart.loadConfig("./config.xml");
+    chart.loadData("./data.csv");
   </script>
 </body>
 </html>

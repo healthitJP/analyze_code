@@ -1,35 +1,18 @@
 <config>
     <graphStyle>
-        <graphTitle>Graph Title</graphTitle>
+        <graphTitle>Graph Title2</graphTitle>
         <legend visible="true"/>
         <axis>
-            <xAxis title="X Axis" tickInterval="10" showLine="true"/>
-            <yAxis title="Y Axis" tickInterval="10" showLine="true"/>
+            <xAxis title="X Axis" tickNumber="10" showLine="true"/>
+            <yAxis title="Y Axis" tickNumber="10" showLine="true"/>
         </axis>
-        <graphType>line</graphType>
+        <graphType>scatter</graphType>
+        <seriesName>テストのデータ</seriesName>
     </graphStyle>
-    <eventListeners>
-        <zoom enabled="true"/>
-        <pan enabled="true"/>
-        <tooltip enabled="true"/>
-        <locked enabled="false"/>
-        <lockedKeyboard enabled="false"/>
-        <lockedMouse enabled="false"/>
-        <lockedWheel enabled="false"/>
-    </eventListeners>
-    <dataFormat>
-        <columnMapping/>
-        <dateFormat/>
-        <numberFormat/>
-    </dataFormat>
+    <control zoom="1" pan="1" tooltip="1" locked="0" lockedMouse="0" lockedWheel="0"/>
     <colorScheme>
         <background>#ffffff</background>
         <axisColor>#000000</axisColor>
-        <seriesColors>
-            <color>#ff0000</color>
-            <color>#00ff00</color>
-            <color>#0000ff</color>
-        </seriesColors>
+        <seriesColor>#00ff00</seriesColor>
     </colorScheme>
-    <fontAndLabels/>
 </config>

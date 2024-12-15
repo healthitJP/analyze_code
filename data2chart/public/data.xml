@@ -1,27 +1,22 @@
 <data>
     <entry>
-        <value1>10</value1>
-        <value2>20</value2>
-        <value3>30</value3>
+        <xValue>10</xValue>
+        <yValue>20</yValue>
     </entry>
     <entry>
-        <value1>15</value1>
-        <value2>25</value2>
-        <value3>35</value3>
+        <xValue>15</xValue>
+        <yValue>25</yValue>
     </entry>
     <entry>
-        <value1>20</value1>
-        <value2>30</value2>
-        <value3>40</value3>
+        <xValue>20</xValue>
+        <yValue>30</yValue>
     </entry>
     <entry>
-        <value1>25</value1>
-        <value2>35</value2>
-        <value3>45</value3>
+        <xValue>25</xValue>
+        <yValue>35</yValue>
     </entry>
     <entry>
-        <value1>30</value1>
-        <value2>40</value2>
-        <value3>50</value3>
+        <xValue>30</xValue>
+        <yValue>40</yValue>
     </entry>
 </data>
