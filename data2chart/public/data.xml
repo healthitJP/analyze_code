@@ -1,0 +1,27 @@
+<data>
+    <entry>
+        <value1>10</value1>
+        <value2>20</value2>
+        <value3>30</value3>
+    </entry>
+    <entry>
+        <value1>15</value1>
+        <value2>25</value2>
+        <value3>35</value3>
+    </entry>
+    <entry>
+        <value1>20</value1>
+        <value2>30</value2>
+        <value3>40</value3>
+    </entry>
+    <entry>
+        <value1>25</value1>
+        <value2>35</value2>
+        <value3>45</value3>
+    </entry>
+    <entry>
+        <value1>30</value1>
+        <value2>40</value2>
+        <value3>50</value3>
+    </entry>
+</data>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>data2chart</title>
+</head>
+<body>
+  <div id="id"></div>
+  <script src="./dist/data-2-chart.umd.js"></script>
+  <script>
+    chart=Data2Chart.createChart('id')
+    console.log('data2chart is ready');
+    window.chart=chart;
+    chart.loadConfig("./config.xml");
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<config>
+    <graphStyle>
+        <graphTitle>Graph Title</graphTitle>
+        <legend visible="true"/>
+        <axis>
+            <xAxis title="X Axis" tickInterval="10" showLine="true"/>
+            <yAxis title="Y Axis" tickInterval="10" showLine="true"/>
+        </axis>
+        <graphType>line</graphType>
+    </graphStyle>
+    <eventListeners>
+        <zoom enabled="true"/>
+        <pan enabled="true"/>
+        <tooltip enabled="true"/>
+        <locked enabled="false"/>
+        <lockedKeyboard enabled="false"/>
+        <lockedMouse enabled="false"/>
+        <lockedWheel enabled="false"/>
+    </eventListeners>
+    <dataFormat>
+        <columnMapping/>
+        <dateFormat/>
+        <numberFormat/>
+    </dataFormat>
+    <colorScheme>
+        <background>#ffffff</background>
+        <axisColor>#000000</axisColor>
+        <seriesColors>
+            <color>#ff0000</color>
+            <color>#00ff00</color>
+            <color>#0000ff</color>
+        </seriesColors>
+    </colorScheme>
+    <fontAndLabels/>
+</config>
