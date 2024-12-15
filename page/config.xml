@@ -1,0 +1,18 @@
+<config>
+    <graphStyle>
+        <graphTitle>Graph Title2</graphTitle>
+        <legend visible="true"/>
+        <axis>
+            <xAxis title="X Axis" tickNumber="10" showLine="true"/>
+            <yAxis title="Y Axis" tickNumber="10" showLine="true"/>
+        </axis>
+        <graphType>scatter</graphType>
+        <seriesName>テストのデータ</seriesName>
+    </graphStyle>
+    <control zoom="1" pan="1" tooltip="1" locked="0" lockedMouse="0" lockedWheel="0"/>
+    <colorScheme>
+        <background>#ffffff</background>
+        <axisColor>#000000</axisColor>
+        <seriesColor>#00ff00</seriesColor>
+    </colorScheme>
+</config>

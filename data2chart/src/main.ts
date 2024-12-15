@@ -77,11 +77,11 @@ class ChartObject {
 
     this.data = [];
 
-    this.canvas.addEventListener('wheel', this.handleZoom.bind(this));
-    this.canvas.addEventListener('mousedown', this.startPan.bind(this));
-    this.canvas.addEventListener('mouseup', this.endPan.bind(this));
-    this.canvas.addEventListener('mousemove', this.handlePan.bind(this));
-    this.canvas.addEventListener('mousemove', this.showTooltip.bind(this));
+    this.canvas.addEventListener('wheel', this._handleZoom.bind(this));
+    this.canvas.addEventListener('mousedown', this._startPan.bind(this));
+    this.canvas.addEventListener('mouseup', this._endPan.bind(this));
+    this.canvas.addEventListener('mousemove', this._handlePan.bind(this));
+    this.canvas.addEventListener('mousemove', this._showTooltip.bind(this));
 
     // Create tooltip element
     const tooltip = document.createElement('div');
@@ -143,11 +143,11 @@ class ChartObject {
       const response = await fetch(dataSource);
       const dataText = await response.text();
       if (dataSource.endsWith('.csv')) {
-        this.data = this.parseCSV(dataText);
+        this.data = this._parseCSV(dataText);
       } else if (dataSource.endsWith('.json')) {
         this.data = JSON.parse(dataText);
       } else if (dataSource.endsWith('.xml')) {
-        this.data = this.parseXML(dataText);
+        this.data = this._parseXML(dataText);
       }
     } else {
       this.data = dataSource as ChartData[];
@@ -175,7 +175,7 @@ class ChartObject {
     this.draw();
   }
 
-  private parseCSV(csvText: string): ChartData[] {
+  private _parseCSV(csvText: string): ChartData[] {
     const lines = csvText.split('\n');
     const result: ChartData[] = [];
     for (let i = 0; i < lines.length; i++) {
@@ -188,7 +188,7 @@ class ChartObject {
     return result;
   }
 
-  private parseXML(xmlText: string): ChartData[] {
+  private _parseXML(xmlText: string): ChartData[] {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
     const entries = xmlDoc.getElementsByTagName('entry');
@@ -203,8 +203,8 @@ class ChartObject {
     return result;
   }
 
-  private xMargin = 70;
-  private yMargin = 50;
+  private _xMargin = 70;
+  private _yMargin = 50;
   draw(): void {
       // Clear canvas
       this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -216,9 +216,9 @@ class ChartObject {
       // Draw axes
       this.context.strokeStyle = this.config.colorScheme.axisColor;
       this.context.beginPath();
-      this.context.moveTo(this.xMargin, 0);
-      this.context.lineTo(this.xMargin, this.canvas.height - this.yMargin);
-      this.context.lineTo(this.canvas.width, this.canvas.height - this.yMargin);
+      this.context.moveTo(this._xMargin, 0);
+      this.context.lineTo(this._xMargin, this.canvas.height - this._yMargin);
+      this.context.lineTo(this.canvas.width, this.canvas.height - this._yMargin);
       this.context.stroke();
   
       // Draw axis labels
@@ -239,10 +239,10 @@ class ChartObject {
       // Draw x-axis ticks and labels
       const xTickNumber = this.config.graphStyle.axis.xAxis.tickNumber;
       for (let x = xMin; x <= xMax+(xMax - xMin) / Math.max(xTickNumber, 1); x += (xMax - xMin) / Math.max(xTickNumber, 1)) {
-          const xPos = this.xMargin + ((x - xMin) / (xMax - xMin)) * (this.canvas.width - 100);
+          const xPos = this._xMargin + ((x - xMin) / (xMax - xMin)) * (this.canvas.width - 100);
           this.context.beginPath();
-          this.context.moveTo(xPos, this.canvas.height - this.yMargin);
-          this.context.lineTo(xPos, this.canvas.height - this.yMargin + 5);
+          this.context.moveTo(xPos, this.canvas.height - this._yMargin);
+          this.context.lineTo(xPos, this.canvas.height - this._yMargin + 5);
           this.context.stroke();
           this.context.fillText(x.toPrecision(3).toString(), xPos - 5, this.canvas.height - 30);
       }
@@ -250,10 +250,10 @@ class ChartObject {
       // Draw y-axis ticks and labels
       const yTickNumber = this.config.graphStyle.axis.yAxis.tickNumber;
       for (let y = yMin; y <= yMax+(yMax - yMin) / Math.max(yTickNumber, 1); y += (yMax - yMin) / Math.max(yTickNumber, 1)) {
-          const yPos = this.canvas.height - this.yMargin - ((y - yMin) / (yMax - yMin)) * (this.canvas.height - 100);
+          const yPos = this.canvas.height - this._yMargin - ((y - yMin) / (yMax - yMin)) * (this.canvas.height - 100);
           this.context.beginPath();
-          this.context.moveTo(this.xMargin, yPos);
-          this.context.lineTo(this.xMargin - 5, yPos);
+          this.context.moveTo(this._xMargin, yPos);
+          this.context.lineTo(this._xMargin - 5, yPos);
           this.context.stroke();
           this.context.fillText(y.toPrecision(3).toString(), 25, yPos + 5);
       }
@@ -263,21 +263,21 @@ class ChartObject {
           this.context.strokeStyle = this.config.colorScheme.seriesColor;
           this.context.beginPath();
           this.context.moveTo(
-              this.xMargin + ((this.data[0].xValue - xMin) / (xMax - xMin)) * (this.canvas.width - 100),
-              this.canvas.height - this.yMargin - ((this.data[0].yValue - yMin) / (yMax - yMin)) * (this.canvas.height - 100)
+              this._xMargin + ((this.data[0].xValue - xMin) / (xMax - xMin)) * (this.canvas.width - 100),
+              this.canvas.height - this._yMargin - ((this.data[0].yValue - yMin) / (yMax - yMin)) * (this.canvas.height - 100)
           );
           for (let i = 1; i < this.data.length; i++) {
               this.context.lineTo(
-                  this.xMargin + ((this.data[i].xValue - xMin) / (xMax - xMin)) * (this.canvas.width - 100),
-                  this.canvas.height - this.yMargin - ((this.data[i].yValue - yMin) / (yMax - yMin)) * (this.canvas.height - 100)
+                  this._xMargin + ((this.data[i].xValue - xMin) / (xMax - xMin)) * (this.canvas.width - 100),
+                  this.canvas.height - this._yMargin - ((this.data[i].yValue - yMin) / (yMax - yMin)) * (this.canvas.height - 100)
               );
           }
           this.context.stroke();
       } else if (this.config.graphStyle.graphType === 'scatter') {
           this.context.fillStyle = this.config.colorScheme.seriesColor;
           for (let i = 0; i < this.data.length; i++) {
-              const xPos = this.xMargin + ((this.data[i].xValue - xMin) / (xMax - xMin)) * (this.canvas.width - 100);
-              const yPos = this.canvas.height - this.yMargin - ((this.data[i].yValue - yMin) / (yMax - yMin)) * (this.canvas.height - 100);
+              const xPos = this._xMargin + ((this.data[i].xValue - xMin) / (xMax - xMin)) * (this.canvas.width - 100);
+              const yPos = this.canvas.height - this._yMargin - ((this.data[i].yValue - yMin) / (yMax - yMin)) * (this.canvas.height - 100);
               this.context.beginPath();
               this.context.arc(xPos, yPos, 3, 0, 2 * Math.PI);
               this.context.fill();
@@ -333,7 +333,7 @@ class ChartObject {
     this.config.control.zoom = enable;
   }
 
-  private handleZoom(event: WheelEvent): void {
+  private _handleZoom(event: WheelEvent): void {
     if (!this.config.control.zoom || this.config.control.locked || this.config.control.lockedWheel) return;
 
     event.preventDefault();
@@ -357,26 +357,26 @@ class ChartObject {
   enablePan(enable: boolean): void {
     this.config.control.pan = enable;
   }
-  private isPanning = false;
-  private panStartX = 0;
-  private panStartY = 0;
+  private _isPanning = false;
+  private _panStartX = 0;
+  private _panStartY = 0;
 
-  private startPan(event: MouseEvent): void {
+  private _startPan(event: MouseEvent): void {
     if (!this.config.control.pan || this.config.control.locked || this.config.control.lockedMouse) return;
 
-    this.isPanning = true;
-    this.panStartX = event.clientX;
-    this.panStartY = event.clientY;
+    this._isPanning = true;
+    this._panStartX = event.clientX;
+    this._panStartY = event.clientY;
   }
 
-  private endPan(): void {
-    this.isPanning = false;
+  private _endPan(): void {
+    this._isPanning = false;
   }
-  private handlePan(event: MouseEvent): void {
-    if (!this.isPanning || !this.config.control.pan || this.config.control.locked || this.config.control.lockedMouse) return;
+  private _handlePan(event: MouseEvent): void {
+    if (!this._isPanning || !this.config.control.pan || this.config.control.locked || this.config.control.lockedMouse) return;
 
-    const dx = event.clientX - this.panStartX;
-    const dy = event.clientY - this.panStartY;
+    const dx = event.clientX - this._panStartX;
+    const dy = event.clientY - this._panStartY;
 
     const xRange = this.config.graphStyle.axis.xAxis.max - this.config.graphStyle.axis.xAxis.min;
     const yRange = this.config.graphStyle.axis.yAxis.max - this.config.graphStyle.axis.yAxis.min;
@@ -389,8 +389,8 @@ class ChartObject {
     this.config.graphStyle.axis.yAxis.min += yShift;
     this.config.graphStyle.axis.yAxis.max += yShift;
 
-    this.panStartX = event.clientX;
-    this.panStartY = event.clientY;
+    this._panStartX = event.clientX;
+    this._panStartY = event.clientY;
 
     this.draw();
   }
@@ -398,7 +398,7 @@ class ChartObject {
   enableTooltip(enable: boolean): void {
     this.config.control.tooltip = enable;
   }
-    private showTooltip(event: MouseEvent): void {
+    private _showTooltip(event: MouseEvent): void {
       if (!this.config.control.tooltip || this.config.control.locked || this.config.control.lockedMouse) return;
   
       const rect = this.canvas.getBoundingClientRect();
@@ -439,8 +439,8 @@ class ChartObject {
           // Highlight the nearest point on the canvas
           this.draw(); // Redraw the canvas to clear previous highlights
           this.context.fillStyle = this.config.colorScheme.seriesColor;
-          const xPos = this.xMargin + ((nearestPoint.xValue - xMin) / (xMax - xMin)) * (this.canvas.width - 100);
-          const yPos = this.canvas.height - this.yMargin - ((nearestPoint.yValue - yMin) / (yMax - yMin)) * (this.canvas.height - 100);
+          const xPos = this._xMargin + ((nearestPoint.xValue - xMin) / (xMax - xMin)) * (this.canvas.width - 100);
+          const yPos = this.canvas.height - this._yMargin - ((nearestPoint.yValue - yMin) / (yMax - yMin)) * (this.canvas.height - 100);
           this.context.beginPath();
           this.context.arc(xPos, yPos, 5, 0, 2 * Math.PI);
           this.context.fill();
@@ -469,7 +469,7 @@ class ChartObject {
   }
 
   exportCurrentConfig(fileName: string = 'config.xml'): void {
-      const configXml = this.convertConfigToXml(this.getCurrentConfig());
+      const configXml = this._convertConfigToXml(this.getCurrentConfig());
       const configBlob = new Blob([configXml], { type: 'application/xml' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(configBlob);
@@ -477,7 +477,7 @@ class ChartObject {
       link.click();
   }
   
-  private convertConfigToXml(config: any): string {
+  private _convertConfigToXml(config: any): string {
       const xmlDoc = document.implementation.createDocument('', '', null);
       const configElement = xmlDoc.createElement('config');
   

@@ -1,0 +1,24 @@
+{
+    "data": [
+        {
+            "xValue": 10,
+            "yValue": 20
+        },
+        {
+            "xValue": 15,
+            "yValue": 25
+        },
+        {
+            "xValue": 20,
+            "yValue": 30
+        },
+        {
+            "xValue": 25,
+            "yValue": 35
+        },
+        {
+            "xValue": 30,
+            "yValue": 40
+        }
+    ]
+}
