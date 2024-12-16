@@ -222,51 +222,11 @@ class ChartObject {
     this.#context.fillStyle = this.#config.colorScheme.background;
     this.#context.fillRect(0, 0, this.#canvas.width, this.#canvas.height);
 
-    // Draw axes
-    this.#context.strokeStyle = this.#config.colorScheme.axisColor;
-    this.#context.beginPath();
-    this.#context.moveTo(this.#xMargin, 0);
-    this.#context.lineTo(this.#xMargin, this.#canvas.height - this.#yMargin);
-    this.#context.lineTo(this.#canvas.width, this.#canvas.height - this.#yMargin);
-    this.#context.stroke();
-
-    // Draw axis labels
-    this.#context.fillStyle = this.#config.colorScheme.axisColor;
-    this.#context.font = '16px Arial';
-    this.#context.fillText(this.#config.graphStyle.axis.xAxis.title, this.#canvas.width / 2, this.#canvas.height - 10);
-    this.#context.save();
-    this.#context.rotate(-Math.PI / 2);
-    this.#context.fillText(this.#config.graphStyle.axis.yAxis.title, -this.#canvas.height / 2, 20);
-    this.#context.restore();
-
     // Determine axis ranges
     const xMin = this.#config.graphStyle.axis.xAxis.min;
     const xMax = this.#config.graphStyle.axis.xAxis.max;
     const yMin = this.#config.graphStyle.axis.yAxis.min;
     const yMax = this.#config.graphStyle.axis.yAxis.max;
-
-    // Draw x-axis ticks and labels
-    const xTickNumber = this.#config.graphStyle.axis.xAxis.tickNumber;
-    for (let x = xMin; x <= xMax + (xMax - xMin) / Math.max(xTickNumber, 1); x += (xMax - xMin) / Math.max(xTickNumber, 1)) {
-      const xPos = this.#xMargin + ((x - xMin) / (xMax - xMin)) * (this.#canvas.width - 100);
-      this.#context.beginPath();
-      this.#context.moveTo(xPos, this.#canvas.height - this.#yMargin);
-      this.#context.lineTo(xPos, this.#canvas.height - this.#yMargin + 5);
-      this.#context.stroke();
-      this.#context.fillText(x.toPrecision(3).toString(), xPos - 5, this.#canvas.height - 30);
-    }
-
-    // Draw y-axis ticks and labels
-    const yTickNumber = this.#config.graphStyle.axis.yAxis.tickNumber;
-    for (let y = yMin; y <= yMax + (yMax - yMin) / Math.max(yTickNumber, 1); y += (yMax - yMin) / Math.max(yTickNumber, 1)) {
-      const yPos = this.#canvas.height - this.#yMargin - ((y - yMin) / (yMax - yMin)) * (this.#canvas.height - 100);
-      this.#context.beginPath();
-      this.#context.moveTo(this.#xMargin, yPos);
-      this.#context.lineTo(this.#xMargin - 5, yPos);
-      this.#context.stroke();
-      this.#context.fillText(y.toPrecision(3).toString(), 25, yPos + 5);
-    }
-
     // Draw data
     if (this.#config.graphStyle.graphType === 'line') {
       this.#context.strokeStyle = this.#config.colorScheme.seriesColor;
@@ -291,6 +251,45 @@ class ChartObject {
         this.#context.arc(xPos, yPos, 3, 0, 2 * Math.PI);
         this.#context.fill();
       }
+    }
+
+    // Draw axes
+    this.#context.strokeStyle = this.#config.colorScheme.axisColor;
+    this.#context.beginPath();
+    this.#context.moveTo(this.#xMargin, 0);
+    this.#context.lineTo(this.#xMargin, this.#canvas.height - this.#yMargin);
+    this.#context.lineTo(this.#canvas.width, this.#canvas.height - this.#yMargin);
+    this.#context.stroke();
+
+    // Draw axis labels
+    this.#context.fillStyle = this.#config.colorScheme.axisColor;
+    this.#context.font = '16px Arial';
+    this.#context.fillText(this.#config.graphStyle.axis.xAxis.title, this.#canvas.width / 2, this.#canvas.height - 10);
+    this.#context.save();
+    this.#context.rotate(-Math.PI / 2);
+    this.#context.fillText(this.#config.graphStyle.axis.yAxis.title, -this.#canvas.height / 2, 20);
+    this.#context.restore();
+
+    // Draw x-axis ticks and labels
+    const xTickNumber = this.#config.graphStyle.axis.xAxis.tickNumber;
+    for (let x = xMin; x <= xMax + (xMax - xMin) / Math.max(xTickNumber, 1); x += (xMax - xMin) / Math.max(xTickNumber, 1)) {
+      const xPos = this.#xMargin + ((x - xMin) / (xMax - xMin)) * (this.#canvas.width - 100);
+      this.#context.beginPath();
+      this.#context.moveTo(xPos, this.#canvas.height - this.#yMargin);
+      this.#context.lineTo(xPos, this.#canvas.height - this.#yMargin + 5);
+      this.#context.stroke();
+      this.#context.fillText(x.toPrecision(3).toString(), xPos - 5, this.#canvas.height - 30);
+    }
+
+    // Draw y-axis ticks and labels
+    const yTickNumber = this.#config.graphStyle.axis.yAxis.tickNumber;
+    for (let y = yMin; y <= yMax + (yMax - yMin) / Math.max(yTickNumber, 1); y += (yMax - yMin) / Math.max(yTickNumber, 1)) {
+      const yPos = this.#canvas.height - this.#yMargin - ((y - yMin) / (yMax - yMin)) * (this.#canvas.height - 100);
+      this.#context.beginPath();
+      this.#context.moveTo(this.#xMargin, yPos);
+      this.#context.lineTo(this.#xMargin - 5, yPos);
+      this.#context.stroke();
+      this.#context.fillText(y.toPrecision(3).toString(), 25, yPos + 5);
     }
 
     // Draw legend if visible
