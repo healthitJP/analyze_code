@@ -9,7 +9,7 @@
         <graphType>scatter</graphType>
         <seriesName>テストのデータ</seriesName>
     </graphStyle>
-    <control zoom="1" pan="1" tooltip="1" locked="0" lockedMouse="0" lockedWheel="0"/>
+    <control zoom="1" pan="1" tooltip="1" locked="0" lockedMouse="0" lockedWheel="0" lockedTouch="0"/>
     <colorScheme>
         <background>#ffffff</background>
         <axisColor>#000000</axisColor>

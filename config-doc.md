@@ -20,7 +20,7 @@
         <graphType>グラフの種類</graphType>
         <seriesName>系列名</seriesName>
     </graphStyle>
-    <control zoom="1|0" pan="1|0" tooltip="1|0" locked="1|0" lockedMouse="1|0" lockedWheel="1|0"/>
+    <control zoom="1|0" pan="1|0" tooltip="1|0" locked="1|0" lockedMouse="1|0" lockedWheel="1|0" lockedTouch="1|0"/>
     <colorScheme>
         <background>背景色 (例: #ffffff)</background>
         <axisColor>軸の色 (例: #000000)</axisColor>
@@ -107,6 +107,12 @@
     - `1`: ロック
     - `0`: ロック解除
 
+- **lockedTouch**
+  - タッチ操作を無効化。
+  - 値:
+    - `1`: ロック
+    - `0`: ロック解除
+
 ---
 
 ### 3. **<colorScheme>**
@@ -141,7 +147,7 @@
         <graphType>scatter</graphType>
         <seriesName>サンプルデータ</seriesName>
     </graphStyle>
-    <control zoom="1" pan="1" tooltip="1" locked="0" lockedMouse="0" lockedWheel="0"/>
+    <control zoom="1" pan="1" tooltip="1" locked="0" lockedMouse="0" lockedWheel="0" lockedTouch="0"/>
     <colorScheme>
         <background>#ffffff</background>
         <axisColor>#000000</axisColor>

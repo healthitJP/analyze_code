@@ -16,6 +16,7 @@ type ChartConfig = {
     locked: boolean;
     lockedMouse: boolean;
     lockedWheel: boolean;
+    lockedTouch: boolean;
   };
   colorScheme: {
     background: string;
@@ -34,7 +35,7 @@ class ChartObject {
   #data: ChartData[];
   #canvas: HTMLCanvasElement;
   #context: CanvasRenderingContext2D;
-
+  #lastPinchDistance: number | null = null;
   constructor(id: string) {
     const container = document.getElementById(id);
     if (!container) {
@@ -66,7 +67,8 @@ class ChartObject {
         tooltip: true,
         locked: false,
         lockedMouse: false,
-        lockedWheel: false
+        lockedWheel: false,
+        lockedTouch: false,
       },
       colorScheme: {
         background: '#ffffff',
@@ -82,6 +84,12 @@ class ChartObject {
     this.#canvas.addEventListener('mouseup', this.endPan.bind(this));
     this.#canvas.addEventListener('mousemove', this.handlePan.bind(this));
     this.#canvas.addEventListener('mousemove', this.showTooltip.bind(this));
+    this.#canvas.addEventListener('touchstart', this.startPanTouch.bind(this));
+    this.#canvas.addEventListener('touchend', this.endPanTouch.bind(this));
+    this.#canvas.addEventListener('touchmove', this.handlePanTouch.bind(this));
+    this.#canvas.addEventListener('touchstart', this.handlePinchZoom.bind(this));
+    this.#canvas.addEventListener('touchmove', this.handlePinchZoom.bind(this));
+    this.#canvas.addEventListener('touchend', this.resetPinchZoom.bind(this));
 
     // Create tooltip element
     const tooltip = document.createElement('div');
@@ -125,6 +133,7 @@ class ChartObject {
       this.#config.control.locked = control.getAttribute('locked') === 'true' || this.#config.control.locked;
       this.#config.control.lockedMouse = control.getAttribute('lockedMouse') === 'true' || this.#config.control.lockedMouse;
       this.#config.control.lockedWheel = control.getAttribute('lockedWheel') === 'true' || this.#config.control.lockedWheel;
+      this.#config.control.lockedTouch = control.getAttribute('lockedTouch') === 'true' || this.#config.control.lockedTouch;
     }
 
     const colorScheme = xmlDoc.getElementsByTagName('colorScheme')[0];
@@ -206,96 +215,96 @@ class ChartObject {
   #xMargin = 70;
   #yMargin = 50;
   draw(): void {
-      // Clear canvas
-      this.#context.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
-  
-      // Set background color
-      this.#context.fillStyle = this.#config.colorScheme.background;
-      this.#context.fillRect(0, 0, this.#canvas.width, this.#canvas.height);
-  
-      // Draw axes
-      this.#context.strokeStyle = this.#config.colorScheme.axisColor;
+    // Clear canvas
+    this.#context.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
+
+    // Set background color
+    this.#context.fillStyle = this.#config.colorScheme.background;
+    this.#context.fillRect(0, 0, this.#canvas.width, this.#canvas.height);
+
+    // Draw axes
+    this.#context.strokeStyle = this.#config.colorScheme.axisColor;
+    this.#context.beginPath();
+    this.#context.moveTo(this.#xMargin, 0);
+    this.#context.lineTo(this.#xMargin, this.#canvas.height - this.#yMargin);
+    this.#context.lineTo(this.#canvas.width, this.#canvas.height - this.#yMargin);
+    this.#context.stroke();
+
+    // Draw axis labels
+    this.#context.fillStyle = this.#config.colorScheme.axisColor;
+    this.#context.font = '16px Arial';
+    this.#context.fillText(this.#config.graphStyle.axis.xAxis.title, this.#canvas.width / 2, this.#canvas.height - 10);
+    this.#context.save();
+    this.#context.rotate(-Math.PI / 2);
+    this.#context.fillText(this.#config.graphStyle.axis.yAxis.title, -this.#canvas.height / 2, 20);
+    this.#context.restore();
+
+    // Determine axis ranges
+    const xMin = this.#config.graphStyle.axis.xAxis.min;
+    const xMax = this.#config.graphStyle.axis.xAxis.max;
+    const yMin = this.#config.graphStyle.axis.yAxis.min;
+    const yMax = this.#config.graphStyle.axis.yAxis.max;
+
+    // Draw x-axis ticks and labels
+    const xTickNumber = this.#config.graphStyle.axis.xAxis.tickNumber;
+    for (let x = xMin; x <= xMax + (xMax - xMin) / Math.max(xTickNumber, 1); x += (xMax - xMin) / Math.max(xTickNumber, 1)) {
+      const xPos = this.#xMargin + ((x - xMin) / (xMax - xMin)) * (this.#canvas.width - 100);
       this.#context.beginPath();
-      this.#context.moveTo(this.#xMargin, 0);
-      this.#context.lineTo(this.#xMargin, this.#canvas.height - this.#yMargin);
-      this.#context.lineTo(this.#canvas.width, this.#canvas.height - this.#yMargin);
+      this.#context.moveTo(xPos, this.#canvas.height - this.#yMargin);
+      this.#context.lineTo(xPos, this.#canvas.height - this.#yMargin + 5);
       this.#context.stroke();
-  
-      // Draw axis labels
+      this.#context.fillText(x.toPrecision(3).toString(), xPos - 5, this.#canvas.height - 30);
+    }
+
+    // Draw y-axis ticks and labels
+    const yTickNumber = this.#config.graphStyle.axis.yAxis.tickNumber;
+    for (let y = yMin; y <= yMax + (yMax - yMin) / Math.max(yTickNumber, 1); y += (yMax - yMin) / Math.max(yTickNumber, 1)) {
+      const yPos = this.#canvas.height - this.#yMargin - ((y - yMin) / (yMax - yMin)) * (this.#canvas.height - 100);
+      this.#context.beginPath();
+      this.#context.moveTo(this.#xMargin, yPos);
+      this.#context.lineTo(this.#xMargin - 5, yPos);
+      this.#context.stroke();
+      this.#context.fillText(y.toPrecision(3).toString(), 25, yPos + 5);
+    }
+
+    // Draw data
+    if (this.#config.graphStyle.graphType === 'line') {
+      this.#context.strokeStyle = this.#config.colorScheme.seriesColor;
+      this.#context.beginPath();
+      this.#context.moveTo(
+        this.#xMargin + ((this.#data[0].xValue - xMin) / (xMax - xMin)) * (this.#canvas.width - 100),
+        this.#canvas.height - this.#yMargin - ((this.#data[0].yValue - yMin) / (yMax - yMin)) * (this.#canvas.height - 100)
+      );
+      for (let i = 1; i < this.#data.length; i++) {
+        this.#context.lineTo(
+          this.#xMargin + ((this.#data[i].xValue - xMin) / (xMax - xMin)) * (this.#canvas.width - 100),
+          this.#canvas.height - this.#yMargin - ((this.#data[i].yValue - yMin) / (yMax - yMin)) * (this.#canvas.height - 100)
+        );
+      }
+      this.#context.stroke();
+    } else if (this.#config.graphStyle.graphType === 'scatter') {
+      this.#context.fillStyle = this.#config.colorScheme.seriesColor;
+      for (let i = 0; i < this.#data.length; i++) {
+        const xPos = this.#xMargin + ((this.#data[i].xValue - xMin) / (xMax - xMin)) * (this.#canvas.width - 100);
+        const yPos = this.#canvas.height - this.#yMargin - ((this.#data[i].yValue - yMin) / (yMax - yMin)) * (this.#canvas.height - 100);
+        this.#context.beginPath();
+        this.#context.arc(xPos, yPos, 3, 0, 2 * Math.PI);
+        this.#context.fill();
+      }
+    }
+
+    // Draw legend if visible
+    if (this.#config.graphStyle.legend.visible) {
+      this.#context.fillStyle = this.#config.colorScheme.seriesColor;
+      this.#context.fillRect(this.#canvas.width - 150, 10, 10, 10);
       this.#context.fillStyle = this.#config.colorScheme.axisColor;
-      this.#context.font = '16px Arial';
-      this.#context.fillText(this.#config.graphStyle.axis.xAxis.title, this.#canvas.width / 2, this.#canvas.height - 10);
-      this.#context.save();
-      this.#context.rotate(-Math.PI / 2);
-      this.#context.fillText(this.#config.graphStyle.axis.yAxis.title, -this.#canvas.height / 2, 20);
-      this.#context.restore();
-  
-      // Determine axis ranges
-      const xMin = this.#config.graphStyle.axis.xAxis.min;
-      const xMax = this.#config.graphStyle.axis.xAxis.max;
-      const yMin = this.#config.graphStyle.axis.yAxis.min;
-      const yMax = this.#config.graphStyle.axis.yAxis.max;
-  
-      // Draw x-axis ticks and labels
-      const xTickNumber = this.#config.graphStyle.axis.xAxis.tickNumber;
-      for (let x = xMin; x <= xMax+(xMax - xMin) / Math.max(xTickNumber, 1); x += (xMax - xMin) / Math.max(xTickNumber, 1)) {
-          const xPos = this.#xMargin + ((x - xMin) / (xMax - xMin)) * (this.#canvas.width - 100);
-          this.#context.beginPath();
-          this.#context.moveTo(xPos, this.#canvas.height - this.#yMargin);
-          this.#context.lineTo(xPos, this.#canvas.height - this.#yMargin + 5);
-          this.#context.stroke();
-          this.#context.fillText(x.toPrecision(3).toString(), xPos - 5, this.#canvas.height - 30);
-      }
-  
-      // Draw y-axis ticks and labels
-      const yTickNumber = this.#config.graphStyle.axis.yAxis.tickNumber;
-      for (let y = yMin; y <= yMax+(yMax - yMin) / Math.max(yTickNumber, 1); y += (yMax - yMin) / Math.max(yTickNumber, 1)) {
-          const yPos = this.#canvas.height - this.#yMargin - ((y - yMin) / (yMax - yMin)) * (this.#canvas.height - 100);
-          this.#context.beginPath();
-          this.#context.moveTo(this.#xMargin, yPos);
-          this.#context.lineTo(this.#xMargin - 5, yPos);
-          this.#context.stroke();
-          this.#context.fillText(y.toPrecision(3).toString(), 25, yPos + 5);
-      }
-  
-      // Draw data
-      if (this.#config.graphStyle.graphType === 'line') {
-          this.#context.strokeStyle = this.#config.colorScheme.seriesColor;
-          this.#context.beginPath();
-          this.#context.moveTo(
-              this.#xMargin + ((this.#data[0].xValue - xMin) / (xMax - xMin)) * (this.#canvas.width - 100),
-              this.#canvas.height - this.#yMargin - ((this.#data[0].yValue - yMin) / (yMax - yMin)) * (this.#canvas.height - 100)
-          );
-          for (let i = 1; i < this.#data.length; i++) {
-              this.#context.lineTo(
-                  this.#xMargin + ((this.#data[i].xValue - xMin) / (xMax - xMin)) * (this.#canvas.width - 100),
-                  this.#canvas.height - this.#yMargin - ((this.#data[i].yValue - yMin) / (yMax - yMin)) * (this.#canvas.height - 100)
-              );
-          }
-          this.#context.stroke();
-      } else if (this.#config.graphStyle.graphType === 'scatter') {
-          this.#context.fillStyle = this.#config.colorScheme.seriesColor;
-          for (let i = 0; i < this.#data.length; i++) {
-              const xPos = this.#xMargin + ((this.#data[i].xValue - xMin) / (xMax - xMin)) * (this.#canvas.width - 100);
-              const yPos = this.#canvas.height - this.#yMargin - ((this.#data[i].yValue - yMin) / (yMax - yMin)) * (this.#canvas.height - 100);
-              this.#context.beginPath();
-              this.#context.arc(xPos, yPos, 3, 0, 2 * Math.PI);
-              this.#context.fill();
-          }
-      }
-  
-      // Draw legend if visible
-      if (this.#config.graphStyle.legend.visible) {
-          this.#context.fillStyle = this.#config.colorScheme.seriesColor;
-          this.#context.fillRect(this.#canvas.width - 150, 10, 10, 10);
-          this.#context.fillStyle = this.#config.colorScheme.axisColor;
-          this.#context.fillText(this.#config.graphStyle.seriesName, this.#canvas.width - 130, 20);
-      }
-  
-      // Draw title
-      this.#context.fillStyle = this.#config.colorScheme.axisColor;
-      this.#context.font = '20px Arial';
-      this.#context.fillText(this.#config.graphStyle.graphTitle, this.#canvas.width / 2 - this.#context.measureText(this.#config.graphStyle.graphTitle).width / 2, 30);
+      this.#context.fillText(this.#config.graphStyle.seriesName, this.#canvas.width - 130, 20);
+    }
+
+    // Draw title
+    this.#context.fillStyle = this.#config.colorScheme.axisColor;
+    this.#context.font = '20px Arial';
+    this.#context.fillText(this.#config.graphStyle.graphTitle, this.#canvas.width / 2 - this.#context.measureText(this.#config.graphStyle.graphTitle).width / 2, 30);
   }
 
   setAxisLabels(xLabel: string, yLabel: string): void {
@@ -354,6 +363,43 @@ class ChartObject {
     this.draw();
   }
 
+  private handlePinchZoom(event: TouchEvent): void {
+    if (!this.#config.control.zoom || this.#config.control.locked || this.#config.control.lockedTouch) return;
+
+    if (event.touches.length === 2) {
+      event.preventDefault();
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+
+      const currentDistance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+
+      if (this.#lastPinchDistance) {
+        const scale = this.#lastPinchDistance / currentDistance; // Reverse the zoom direction
+        const rect = this.#canvas.getBoundingClientRect();
+        const offsetX = ((touch1.clientX + touch2.clientX) / 2 - rect.left) / this.#canvas.width;
+        const offsetY = ((touch1.clientY + touch2.clientY) / 2 - rect.top) / this.#canvas.height;
+
+        const xRange = this.#config.graphStyle.axis.xAxis.max - this.#config.graphStyle.axis.xAxis.min;
+        const yRange = this.#config.graphStyle.axis.yAxis.max - this.#config.graphStyle.axis.yAxis.min;
+
+        this.#config.graphStyle.axis.xAxis.min += xRange * (1 - scale) * offsetX;
+        this.#config.graphStyle.axis.xAxis.max -= xRange * (1 - scale) * (1 - offsetX);
+        this.#config.graphStyle.axis.yAxis.min += yRange * (1 - scale) * offsetY;
+        this.#config.graphStyle.axis.yAxis.max -= yRange * (1 - scale) * (1 - offsetY);
+
+        this.draw();
+      }
+
+      this.#lastPinchDistance = currentDistance;
+    }
+  }
+
+  private resetPinchZoom(): void {
+    this.#lastPinchDistance = null;
+  }
+
   enablePan(enable: boolean): void {
     this.#config.control.pan = enable;
   }
@@ -395,63 +441,98 @@ class ChartObject {
     this.draw();
   }
 
+  private startPanTouch(event: TouchEvent): void {
+    if (!this.#config.control.pan || this.#config.control.locked || this.#config.control.lockedTouch) return;
+
+    this.#isPanning = true;
+    this.#panStartX = event.touches[0].clientX;
+    this.#panStartY = event.touches[0].clientY;
+  }
+
+  private endPanTouch(): void {
+    this.#isPanning = false;
+  }
+
+  private handlePanTouch(event: TouchEvent): void {
+    if (!this.#isPanning || !this.#config.control.pan || this.#config.control.locked || this.#config.control.lockedTouch) return;
+
+    const dx = event.touches[0].clientX - this.#panStartX;
+    const dy = event.touches[0].clientY - this.#panStartY;
+
+    const xRange = this.#config.graphStyle.axis.xAxis.max - this.#config.graphStyle.axis.xAxis.min;
+    const yRange = this.#config.graphStyle.axis.yAxis.max - this.#config.graphStyle.axis.yAxis.min;
+
+    const xShift = (dx / this.#canvas.width) * xRange;
+    const yShift = (dy / this.#canvas.height) * yRange;
+
+    this.#config.graphStyle.axis.xAxis.min -= xShift;
+    this.#config.graphStyle.axis.xAxis.max -= xShift;
+    this.#config.graphStyle.axis.yAxis.min += yShift;
+    this.#config.graphStyle.axis.yAxis.max += yShift;
+
+    this.#panStartX = event.touches[0].clientX;
+    this.#panStartY = event.touches[0].clientY;
+
+    this.draw();
+  }
+
   enableTooltip(enable: boolean): void {
     this.#config.control.tooltip = enable;
   }
-    private showTooltip(event: MouseEvent): void {
-      if (!this.#config.control.tooltip || this.#config.control.locked || this.#config.control.lockedMouse) return;
-  
-      const rect = this.#canvas.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-  
-      const xMin = this.#config.graphStyle.axis.xAxis.min;
-      const xMax = this.#config.graphStyle.axis.xAxis.max;
-      const yMin = this.#config.graphStyle.axis.yAxis.min;
-      const yMax = this.#config.graphStyle.axis.yAxis.max;
-  
-      const xValue = xMin + (x / this.#canvas.width) * (xMax - xMin);
-      const yValue = yMax - (y / this.#canvas.height) * (yMax - yMin);
-  
-      // Find the nearest data point
-      let nearestPoint = null;
-      let minDistance = Infinity;
-      for (const point of this.#data) {
-          const dx = point.xValue - xValue;
-          const dy = point.yValue - yValue;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < minDistance) {
-              minDistance = distance;
-              nearestPoint = point;
-          }
+  private showTooltip(event: MouseEvent): void {
+    if (!this.#config.control.tooltip || this.#config.control.locked || this.#config.control.lockedMouse) return;
+
+    const rect = this.#canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const xMin = this.#config.graphStyle.axis.xAxis.min;
+    const xMax = this.#config.graphStyle.axis.xAxis.max;
+    const yMin = this.#config.graphStyle.axis.yAxis.min;
+    const yMax = this.#config.graphStyle.axis.yAxis.max;
+
+    const xValue = xMin + (x / this.#canvas.width) * (xMax - xMin);
+    const yValue = yMax - (y / this.#canvas.height) * (yMax - yMin);
+
+    // Find the nearest data point
+    let nearestPoint = null;
+    let minDistance = Infinity;
+    for (const point of this.#data) {
+      const dx = point.xValue - xValue;
+      const dy = point.yValue - yValue;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestPoint = point;
       }
-  
-      if (nearestPoint) {
-          // Show tooltip
-          const tooltip = document.getElementById('tooltip');
-          if (tooltip) {
-              tooltip.style.left = `${event.clientX + 10}px`;
-              tooltip.style.top = `${event.clientY + 10}px`;
-              tooltip.innerHTML = `x: ${nearestPoint.xValue}, y: ${nearestPoint.yValue}`;
-              tooltip.style.display = 'block';
-          }
-  
-          // Highlight the nearest point on the canvas
-          this.draw(); // Redraw the canvas to clear previous highlights
-          this.#context.fillStyle = this.#config.colorScheme.seriesColor;
-          const xPos = this.#xMargin + ((nearestPoint.xValue - xMin) / (xMax - xMin)) * (this.#canvas.width - 100);
-          const yPos = this.#canvas.height - this.#yMargin - ((nearestPoint.yValue - yMin) / (yMax - yMin)) * (this.#canvas.height - 100);
-          this.#context.beginPath();
-          this.#context.arc(xPos, yPos, 5, 0, 2 * Math.PI);
-          this.#context.fill();
-      } else {
-          // Hide tooltip
-          const tooltip = document.getElementById('tooltip');
-          if (tooltip) {
-              tooltip.style.display = 'none';
-          }
-          this.draw(); // Redraw the canvas to clear previous highlights
+    }
+
+    if (nearestPoint) {
+      // Show tooltip
+      const tooltip = document.getElementById('tooltip');
+      if (tooltip) {
+        tooltip.style.left = `${event.clientX + 10}px`;
+        tooltip.style.top = `${event.clientY + 10}px`;
+        tooltip.innerHTML = `x: ${nearestPoint.xValue}, y: ${nearestPoint.yValue}`;
+        tooltip.style.display = 'block';
       }
+
+      // Highlight the nearest point on the canvas
+      this.draw(); // Redraw the canvas to clear previous highlights
+      this.#context.fillStyle = this.#config.colorScheme.seriesColor;
+      const xPos = this.#xMargin + ((nearestPoint.xValue - xMin) / (xMax - xMin)) * (this.#canvas.width - 100);
+      const yPos = this.#canvas.height - this.#yMargin - ((nearestPoint.yValue - yMin) / (yMax - yMin)) * (this.#canvas.height - 100);
+      this.#context.beginPath();
+      this.#context.arc(xPos, yPos, 5, 0, 2 * Math.PI);
+      this.#context.fill();
+    } else {
+      // Hide tooltip
+      const tooltip = document.getElementById('tooltip');
+      if (tooltip) {
+        tooltip.style.display = 'none';
+      }
+      this.draw(); // Redraw the canvas to clear previous highlights
+    }
   }
   exportAsImage(type: 'png' | 'jpeg', fileName?: string): void {
     const link = document.createElement('a');
@@ -469,76 +550,76 @@ class ChartObject {
   }
 
   exportCurrentConfig(fileName: string = 'config.xml'): void {
-      const configXml = this.convertConfigToXml(this.getCurrentConfig());
-      const configBlob = new Blob([configXml], { type: 'application/xml' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(configBlob);
-      link.download = fileName.endsWith('.xml') ? fileName : `${fileName}.xml`;
-      link.click();
+    const configXml = this.convertConfigToXml(this.getCurrentConfig());
+    const configBlob = new Blob([configXml], { type: 'application/xml' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(configBlob);
+    link.download = fileName.endsWith('.xml') ? fileName : `${fileName}.xml`;
+    link.click();
   }
-  
+
   private convertConfigToXml(config: any): string {
-      const xmlDoc = document.implementation.createDocument('', '', null);
-      const configElement = xmlDoc.createElement('config');
-  
-      const graphStyleElement = xmlDoc.createElement('graphStyle');
-      const graphTitleElement = xmlDoc.createElement('graphTitle');
-      graphTitleElement.textContent = config.graphStyle.graphTitle;
-      graphStyleElement.appendChild(graphTitleElement);
-  
-      const legendElement = xmlDoc.createElement('legend');
-      legendElement.setAttribute('visible', config.graphStyle.legend.visible.toString());
-      graphStyleElement.appendChild(legendElement);
-  
-      const axisElement = xmlDoc.createElement('axis');
-      const xAxisElement = xmlDoc.createElement('xAxis');
-      xAxisElement.setAttribute('title', config.graphStyle.axis.xAxis.title);
-      xAxisElement.setAttribute('tickNumber', config.graphStyle.axis.xAxis.tickNumber.toString());
-      xAxisElement.setAttribute('showLine', config.graphStyle.axis.xAxis.showLine.toString());
-      axisElement.appendChild(xAxisElement);
-  
-      const yAxisElement = xmlDoc.createElement('yAxis');
-      yAxisElement.setAttribute('title', config.graphStyle.axis.yAxis.title);
-      yAxisElement.setAttribute('tickNumber', config.graphStyle.axis.yAxis.tickNumber.toString());
-      yAxisElement.setAttribute('showLine', config.graphStyle.axis.yAxis.showLine.toString());
-      axisElement.appendChild(yAxisElement);
-  
-      graphStyleElement.appendChild(axisElement);
-  
-      const graphTypeElement = xmlDoc.createElement('graphType');
-      graphTypeElement.textContent = config.graphStyle.graphType;
-      graphStyleElement.appendChild(graphTypeElement);
-  
-      configElement.appendChild(graphStyleElement);
-  
-      const controlElement = xmlDoc.createElement('control');
-      controlElement.setAttribute('zoom', config.control.zoom.toString());
-      controlElement.setAttribute('pan', config.control.pan.toString());
-      controlElement.setAttribute('tooltip', config.control.tooltip.toString());
-      controlElement.setAttribute('locked', config.control.locked.toString());
-      controlElement.setAttribute('lockedMouse', config.control.lockedMouse.toString());
-      controlElement.setAttribute('lockedWheel', config.control.lockedWheel.toString());
-      configElement.appendChild(controlElement);
-  
-      const colorSchemeElement = xmlDoc.createElement('colorScheme');
-      const backgroundElement = xmlDoc.createElement('background');
-      backgroundElement.textContent = config.colorScheme.background;
-      colorSchemeElement.appendChild(backgroundElement);
-  
-      const axisColorElement = xmlDoc.createElement('axisColor');
-      axisColorElement.textContent = config.colorScheme.axisColor;
-      colorSchemeElement.appendChild(axisColorElement);
-  
-      const seriesColorElement = xmlDoc.createElement('seriesColor');
-      seriesColorElement.textContent = config.colorScheme.seriesColor;
-      colorSchemeElement.appendChild(seriesColorElement);
-  
-      configElement.appendChild(colorSchemeElement);
-  
-      xmlDoc.appendChild(configElement);
-  
-      const serializer = new XMLSerializer();
-      return serializer.serializeToString(xmlDoc);
+    const xmlDoc = document.implementation.createDocument('', '', null);
+    const configElement = xmlDoc.createElement('config');
+
+    const graphStyleElement = xmlDoc.createElement('graphStyle');
+    const graphTitleElement = xmlDoc.createElement('graphTitle');
+    graphTitleElement.textContent = config.graphStyle.graphTitle;
+    graphStyleElement.appendChild(graphTitleElement);
+
+    const legendElement = xmlDoc.createElement('legend');
+    legendElement.setAttribute('visible', config.graphStyle.legend.visible.toString());
+    graphStyleElement.appendChild(legendElement);
+
+    const axisElement = xmlDoc.createElement('axis');
+    const xAxisElement = xmlDoc.createElement('xAxis');
+    xAxisElement.setAttribute('title', config.graphStyle.axis.xAxis.title);
+    xAxisElement.setAttribute('tickNumber', config.graphStyle.axis.xAxis.tickNumber.toString());
+    xAxisElement.setAttribute('showLine', config.graphStyle.axis.xAxis.showLine.toString());
+    axisElement.appendChild(xAxisElement);
+
+    const yAxisElement = xmlDoc.createElement('yAxis');
+    yAxisElement.setAttribute('title', config.graphStyle.axis.yAxis.title);
+    yAxisElement.setAttribute('tickNumber', config.graphStyle.axis.yAxis.tickNumber.toString());
+    yAxisElement.setAttribute('showLine', config.graphStyle.axis.yAxis.showLine.toString());
+    axisElement.appendChild(yAxisElement);
+
+    graphStyleElement.appendChild(axisElement);
+
+    const graphTypeElement = xmlDoc.createElement('graphType');
+    graphTypeElement.textContent = config.graphStyle.graphType;
+    graphStyleElement.appendChild(graphTypeElement);
+
+    configElement.appendChild(graphStyleElement);
+
+    const controlElement = xmlDoc.createElement('control');
+    controlElement.setAttribute('zoom', config.control.zoom.toString());
+    controlElement.setAttribute('pan', config.control.pan.toString());
+    controlElement.setAttribute('tooltip', config.control.tooltip.toString());
+    controlElement.setAttribute('locked', config.control.locked.toString());
+    controlElement.setAttribute('lockedMouse', config.control.lockedMouse.toString());
+    controlElement.setAttribute('lockedWheel', config.control.lockedWheel.toString());
+    configElement.appendChild(controlElement);
+
+    const colorSchemeElement = xmlDoc.createElement('colorScheme');
+    const backgroundElement = xmlDoc.createElement('background');
+    backgroundElement.textContent = config.colorScheme.background;
+    colorSchemeElement.appendChild(backgroundElement);
+
+    const axisColorElement = xmlDoc.createElement('axisColor');
+    axisColorElement.textContent = config.colorScheme.axisColor;
+    colorSchemeElement.appendChild(axisColorElement);
+
+    const seriesColorElement = xmlDoc.createElement('seriesColor');
+    seriesColorElement.textContent = config.colorScheme.seriesColor;
+    colorSchemeElement.appendChild(seriesColorElement);
+
+    configElement.appendChild(colorSchemeElement);
+
+    xmlDoc.appendChild(configElement);
+
+    const serializer = new XMLSerializer();
+    return serializer.serializeToString(xmlDoc);
   }
 
   exportCurrentDataAsJSON(fileName: string = 'data.json'): void {

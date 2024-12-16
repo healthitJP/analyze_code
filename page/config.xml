@@ -1,15 +1,15 @@
 <config>
     <graphStyle>
-        <graphTitle>Sigmoid Function Graph</graphTitle>
+        <graphTitle>Graph Title2</graphTitle>
         <legend visible="true"/>
         <axis>
-            <xAxis title="x" tickNumber="10" showLine="true"/>
-            <yAxis title="F(x)" tickNumber="10" showLine="true"/>
+            <xAxis title="X Axis" tickNumber="10" showLine="true"/>
+            <yAxis title="Y Axis" tickNumber="10" showLine="true"/>
         </axis>
         <graphType>scatter</graphType>
-        <seriesName>Sigmoid Function</seriesName>
+        <seriesName>テストのデータ</seriesName>
     </graphStyle>
-    <control zoom="1" pan="1" tooltip="1" locked="0" lockedMouse="0" lockedWheel="0"/>
+    <control zoom="1" pan="1" tooltip="1" locked="0" lockedMouse="0" lockedWheel="0" lockedTouch="0"/>
     <colorScheme>
         <background>#ffffff</background>
         <axisColor>#000000</axisColor>
