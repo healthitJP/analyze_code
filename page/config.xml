@@ -7,7 +7,7 @@
             <yAxis title="y" tickNumber="10" showLine="true"/>
         </axis>
         <graphType>scatter</graphType>
-        <seriesName>Sigmoid FUnction</seriesName>
+        <seriesName>Sigmoid Function</seriesName>
     </graphStyle>
     <control zoom="1" pan="1" tooltip="1" locked="0" lockedMouse="0" lockedWheel="0" lockedTouch="0"/>
     <colorScheme>
