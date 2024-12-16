@@ -18,33 +18,33 @@ export default defineConfig({
         comments: false, // コメントを削除
       },
     },
-    rollupOptions: {
-      plugins: [
-        {
-          name: 'obfuscator',
-          generateBundle(_, bundle) {
-            for (const file in bundle) {
-              if (bundle[file].type === 'chunk') {
-                const chunk = bundle[file];
-                const obfuscated = obfuscator.obfuscate(chunk.code, {
-                  compact: true,
-                  controlFlowFlattening: true,
-                  deadCodeInjection: true,
-                  debugProtection: true,
-                  disableConsoleOutput: true,
-                  stringArray: true,
-                  stringArrayThreshold: 0.75,
-                });
-                chunk.code = obfuscated.getObfuscatedCode();
-              }
-            }
-          },
-        },
-      ],
-      output: {
-        preserveModules: false, // モジュールを1つのファイルに統合
-        globals: {}, // 必要に応じて外部依存を指定
-      },
-    },
+    // rollupOptions: {
+    //   plugins: [
+    //     {
+    //       name: 'obfuscator',
+    //       generateBundle(_, bundle) {
+    //         for (const file in bundle) {
+    //           if (bundle[file].type === 'chunk') {
+    //             const chunk = bundle[file];
+    //             const obfuscated = obfuscator.obfuscate(chunk.code, {
+    //               compact: true,
+    //               controlFlowFlattening: true,
+    //               deadCodeInjection: true,
+    //               debugProtection: true,
+    //               disableConsoleOutput: true,
+    //               stringArray: true,
+    //               stringArrayThreshold: 0.75,
+    //             });
+    //             chunk.code = obfuscated.getObfuscatedCode();
+    //           }
+    //         }
+    //       },
+    //     },
+    //   ],
+    //   output: {
+    //     preserveModules: false, // モジュールを1つのファイルに統合
+    //     globals: {}, // 必要に応じて外部依存を指定
+    //   },
+    // },
   },
 });
